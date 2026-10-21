@@ -71,6 +71,12 @@ input:focus{outline:3px solid var(--ink)}
 .chk{height:50px;border-radius:12px;background:var(--t3);font-size:24px;font-weight:900;color:var(--t0)}
 .set.done .chk{background:var(--ink);color:#7dffa6}.set.done input{background:color-mix(in srgb,var(--t4) 55%,var(--t2))}
 .ex.complete .chip.st{background:#1d7a3e;color:#fff}
+.dots{display:flex;gap:5px;margin:14px 0 8px}.dot{flex:1;border-radius:10px;padding:8px 0;font-weight:900;font-size:12px;background:var(--t3);color:var(--t0)}
+.dot.done{background:var(--ink);color:#7dffa6}.dot.cur{outline:3px solid var(--ink);outline-offset:1px}
+.one{background:var(--t3);border-radius:18px;padding:14px}.one.done{background:color-mix(in srgb,#7dffa6 35%,var(--t3))}
+.onehd{display:flex;align-items:center;gap:10px}.onehd b{flex:1;font-weight:900;font-size:22px}.onehd .tag{padding:9px 10px}
+.lab{font-weight:900;font-size:12px;text-transform:uppercase;margin-top:12px;color:var(--t0)}
+.one .ww{margin:4px 0}.one .ww input{flex:1;width:auto;min-width:0;height:64px;font-size:34px}.one .step{width:64px;height:64px;font-size:34px}
 .nav{display:flex;gap:8px;margin:10px 12px}
 .nav button{flex:1;border-radius:14px;padding:15px;font-weight:900;font-size:17px;text-transform:uppercase;background:#2a241d}
 .nav .go{background:var(--t2);color:var(--ink);flex:2}
@@ -260,9 +266,21 @@ function exCard(x,e,i,N,id){
   <div style="position:relative">${pattern(id,10,10,i*7+3,true)}${stage(x.k,id)}</div><div class="body"><div class="title" id="xt">${esc(x.n)}</div><div class="ar">${AR[x.n]||''}</div>
   <div class="last">${esc(last)}</div>${hint?`<div class="hint">${hint}</div>`:''}
   ${fail?'<div class="last">3 sets to failure</div>':`<div class="ww"><span class="lbl">100%<br>weight</span><button class="step" data-a="ws" data-d="-1">−</button><input type="number" inputmode="decimal" data-f="work" value="${e.work}" placeholder="kg"><button class="step" data-a="ws" data-d="1">+</button></div><div class="mono" style="color:var(--t0)">70% set = <b data-p>${pct(e.work)||'–'}</b> kg · all work sets 8–12 reps</div>`}
-  ${e.sets.map((s,j)=>`<div class="set ${s.done?'done':''}" data-i="${j}"><span class="tag ${s.t}">${LBL[s.t]}</span>
-   <input type="number" inputmode="decimal" data-f="w" value="${s.w}" placeholder="${fail?'BW':'kg'}"><span class="x">×</span>
-   <input type="number" inputmode="numeric" data-f="r" value="${s.r}" placeholder="${TGT[s.t]}"><button class="chk" data-a="set">${s.done?'✓':''}</button></div>`).join('')}</div></div>`;
+  ${setBlock(e,fail)}</div></div>`;
+}
+function curSet(e){if(e.cur!=null&&e.sets[e.cur])return e.cur;const j=e.sets.findIndex(s=>!s.done);return j<0?e.sets.length-1:j}
+function setBlock(e,fail){
+  const j=curSet(e),s=e.sets[j],all=e.sets.every(s=>s.done);
+  return`<div class="dots">${e.sets.map((q,i)=>`<button data-a="pick" data-i="${i}" class="dot ${q.t} ${q.done?'done':''} ${i===j?'cur':''}">${q.done?'✓':LBL[q.t]}</button>`).join('')}</div>
+  <div class="one ${s.done?'done':''}" data-i="${j}">
+   <div class="onehd"><span class="tag ${s.t}">${LBL[s.t]}</span><b>Set ${j+1} of ${e.sets.length}</b><span class="mono">target ${TGT[s.t]} reps</span></div>
+   <div class="lab">Weight (kg)</div>
+   <div class="ww"><button class="step" data-a="sw" data-d="-1">−</button><input type="number" inputmode="decimal" data-f="w" value="${s.w}" placeholder="${fail?'BW':'kg'}"><button class="step" data-a="sw" data-d="1">+</button></div>
+   <div class="lab">Reps</div>
+   <div class="ww"><button class="step" data-a="sr" data-d="-1">−</button><input type="number" inputmode="numeric" data-f="r" value="${s.r}" placeholder="${TGT[s.t]}"><button class="step" data-a="sr" data-d="1">+</button></div>
+   <button class="cta" data-a="set">${s.done?'Undo set ✓':'Done — start rest'}</button>
+   ${all?'<button class="cta alt" data-a="next">Exercise complete · Next ›</button>':''}
+  </div>`;
 }
 function finish(){
   const a=S.active,n=Object.values(a.ex).flatMap(e=>e.sets).filter(s=>s.done);
@@ -298,26 +316,28 @@ app.addEventListener('click',ev=>{
   else if(A==='export'){const u=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));const l=document.createElement('a');l.href=u;l.download='gymlog-'+today()+'.json';l.click()}
   else if(A==='import'){const f=document.createElement('input');f.type='file';f.accept='.json,application/json';f.onchange=()=>f.files[0].text().then(t=>{const d=JSON.parse(t);if(d.history&&confirm('Replace current data with this backup?')){S=d;save();home()}});f.click()}
   else if(A==='ws'){const e=a.ex[card.dataset.k],st=+S.settings.round||2.5;e.work=Math.max(0,(num(e.work)||0)+st*+b.dataset.d);applyWork(card,e);save()}
-  else if(A==='set'){const row=b.closest('.set'),e=a.ex[card.dataset.k],s=e.sets[+row.dataset.i];
-    s.done=!s.done;if(s.done&&s.r===''&&s.t==='warm'){s.r=15;row.querySelector('[data-f=r]').value=15}
-    row.classList.toggle('done',s.done);b.textContent=s.done?'✓':'';const all=e.sets.every(s=>s.done);card.classList.toggle('complete',all);
-    card.querySelector('.st').textContent=card.querySelector('.st').textContent.replace(/\d+\/\d+/,e.sets.filter(s=>s.done).length+'/'+e.sets.length);
-    const ti=document.querySelectorAll('.ticks i')[a.cur];ti&&ti.classList.toggle('done',all);save();
-    if(s.done){document.activeElement?.blur();navigator.vibrate?.(30);startTimer(s.t==='warm'?+S.settings.warm:+S.settings.rest,all?'Rest · then next exercise':'Rest')}}
+  else if(A==='pick'){const e=a.ex[card.dataset.k];e.cur=+b.dataset.i;save();workout()}
+  else if(A==='sw'||A==='sr'){const e=a.ex[card.dataset.k],s=e.sets[curSet(e)],f=A==='sw'?'w':'r',st=A==='sw'?(+S.settings.round||2.5):1;
+    let v=num(s[f]);if(v===''&&f==='r')v=s.t==='warm'?15:(+b.dataset.d>0?7:13);else if(v==='')v=0;s[f]=Math.max(0,v+st*+b.dataset.d);card.querySelector(`.one [data-f=${f}]`).value=s[f];save()}
+  else if(A==='set'){const e=a.ex[card.dataset.k],j=curSet(e),s=e.sets[j];
+    s.done=!s.done;if(s.done&&s.r==='')s.r=s.t==='warm'?15:s.r;
+    if(s.done){const nx=e.sets.findIndex(q=>!q.done);e.cur=nx<0?j:nx}else e.cur=j;save();
+    if(s.done){document.activeElement?.blur();navigator.vibrate?.(30);const all=e.sets.every(q=>q.done);startTimer(s.t==='warm'?+S.settings.warm:+S.settings.rest,all?'Exercise done · rest, then next':'Rest · next: set '+(e.cur+1))}
+    workout()}
 });
 app.addEventListener('input',ev=>{
   const t=ev.target;
   if(t.dataset.s){S.settings[t.dataset.s]=+t.value||S.settings[t.dataset.s];save();return}
   const card=t.closest('.ex');if(!card||!S.active||!card.dataset.k)return;const e=S.active.ex[card.dataset.k];
   if(t.dataset.f==='work'){e.work=num(t.value);applyWork(card,e,true)}
-  else{const s=e.sets[+t.closest('.set').dataset.i];s[t.dataset.f]=num(t.value)}
+  else{const s=e.sets[+t.closest('.one').dataset.i];s[t.dataset.f]=num(t.value)}
   save();
 });
 app.addEventListener('focusin',e=>{if(e.target.tagName==='INPUT')e.target.select()});
 function applyWork(card,e,typing){
   if(!typing)card.querySelector('[data-f=work]').value=e.work;
   card.querySelector('[data-p]').textContent=pct(e.work)||'–';
-  e.sets.forEach((s,i)=>{if(s.done)return;if(s.t==='heavy')s.w=e.work;else if(s.t==='light')s.w=pct(e.work);else return;card.querySelectorAll('.set')[i].querySelector('[data-f=w]').value=s.w});
+  e.sets.forEach((s,i)=>{if(s.done)return;if(s.t==='heavy')s.w=e.work;else if(s.t==='light')s.w=pct(e.work);else return;const o=card.querySelector('.one');if(o&&+o.dataset.i===i)o.querySelector('[data-f=w]').value=s.w});
 }
 // swipe between exercises
 let sx=null,sy=0;app.addEventListener('touchstart',e=>{if(!S.active||e.target.closest('input,button'))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
