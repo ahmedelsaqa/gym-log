@@ -74,7 +74,7 @@ input:focus{outline:3px solid var(--ink)}
 .nav{display:flex;gap:8px;margin:10px 12px}
 .nav button{flex:1;border-radius:14px;padding:15px;font-weight:900;font-size:17px;text-transform:uppercase;background:#2a241d}
 .nav .go{background:var(--t2);color:var(--ink);flex:2}
-#timer{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--ink);border-top:4px solid var(--t2);padding:10px 14px calc(12px + env(safe-area-inset-bottom))}
+#timer{position:fixed;left:0;right:0;top:0;z-index:20;background:var(--ink);border-bottom:4px solid var(--t2);padding:calc(10px + env(safe-area-inset-top)) 14px 12px;box-shadow:0 8px 30px #000a}
 #timer .in{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:8px}
 #timer .tl{flex:1}#timer .tv{font-size:46px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--t2)}
 #timer button{background:#2a241d;border-radius:12px;padding:12px 12px;font-weight:900}
@@ -292,7 +292,7 @@ app.addEventListener('click',ev=>{
   else if(A==='finish')finish();
   else if(A==='next')go(a.cur+1);else if(A==='prev')go(a.cur-1);else if(A==='go')go(+b.dataset.i);
   else if(A==='cardio'){a.cardio=!a.cardio;save();workout()}
-  else if(A==='cardioT')startTimer(15*60,'Cardio · 3.8 mph');
+  else if(A==='cardioT')document.activeElement?.blur(),startTimer(15*60,'Cardio · 3.8 mph');
   else if(A==='del'){if(confirm('Delete this workout from history?')){S.history=S.history.filter(h=>String(h.id)!==b.dataset.id);save();home()}}
   else if(A==='export'){const u=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));const l=document.createElement('a');l.href=u;l.download='gymlog-'+today()+'.json';l.click()}
   else if(A==='import'){const f=document.createElement('input');f.type='file';f.accept='.json,application/json';f.onchange=()=>f.files[0].text().then(t=>{const d=JSON.parse(t);if(d.history&&confirm('Replace current data with this backup?')){S=d;save();home()}});f.click()}
@@ -302,7 +302,7 @@ app.addEventListener('click',ev=>{
     row.classList.toggle('done',s.done);b.textContent=s.done?'✓':'';const all=e.sets.every(s=>s.done);card.classList.toggle('complete',all);
     card.querySelector('.st').textContent=card.querySelector('.st').textContent.replace(/\d+\/\d+/,e.sets.filter(s=>s.done).length+'/'+e.sets.length);
     const ti=document.querySelectorAll('.ticks i')[a.cur];ti&&ti.classList.toggle('done',all);save();
-    if(s.done){navigator.vibrate?.(30);startTimer(s.t==='warm'?+S.settings.warm:+S.settings.rest,all?'Rest · then next exercise':'Rest')}}
+    if(s.done){document.activeElement?.blur();navigator.vibrate?.(30);startTimer(s.t==='warm'?+S.settings.warm:+S.settings.rest,all?'Rest · then next exercise':'Rest')}}
 });
 app.addEventListener('input',ev=>{
   const t=ev.target;
