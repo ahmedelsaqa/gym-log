@@ -74,7 +74,7 @@ input:focus{outline:3px solid var(--ink)}
 .nav{display:flex;gap:8px;margin:10px 12px}
 .nav button{flex:1;border-radius:14px;padding:15px;font-weight:900;font-size:17px;text-transform:uppercase;background:#2a241d}
 .nav .go{background:var(--t2);color:var(--ink);flex:2}
-#timer{position:fixed;left:0;right:0;top:0;z-index:20;background:var(--ink);border-bottom:4px solid var(--t2);padding:calc(10px + env(safe-area-inset-top)) 14px 12px;box-shadow:0 8px 30px #000a}
+#timer{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--ink) 94%,transparent);display:none;flex-direction:column;justify-content:center;padding:24px}#timer.on{display:flex}#timer .in{flex-direction:column;align-items:stretch!important}#timer .tl{text-align:center}#timer .tv{font-size:120px!important;margin:10px 0 20px}#timer .in>button{padding:18px!important;font-size:20px}#timer .bar{width:100%}
 #timer .in{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:8px}
 #timer .tl{flex:1}#timer .tv{font-size:46px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--t2)}
 #timer button{background:#2a241d;border-radius:12px;padding:12px 12px;font-weight:900}
@@ -90,8 +90,9 @@ input:focus{outline:3px solid var(--ink)}
 </head>
 <body>
 <div id="app"></div>
-<div id="timer" hidden><div class="in"><div class="tl"><div class="mono" id="tlab">Rest</div><div class="tv" id="tval">0:00</div></div>
-<button data-t="-15">−15</button><button data-t="15">+15</button><button class="sk" data-t="x">SKIP</button></div><div class="bar"><i id="tbar"></i></div></div>
+<div id="timer"><div class="in"><div class="tl"><div class="mono" id="tlab">Rest</div><div class="tv" id="tval">0:00</div></div>
+<button data-t="-15">−15</button><button data-t="15">+15</button><button class="sk" data-t="x">SKIP REST</button></div><div class="bar"><i id="tbar"></i></div></div>
+<script>window.onerror=(m,u,l)=>{const d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99;background:#c00;color:#fff;padding:10px;font:12px monospace';d.textContent='Error: '+m+' (line '+l+')';document.body.append(d)}</script>
 <script src="picto.js"></script>
 <script>
 // ---------- Program ----------
@@ -326,8 +327,8 @@ app.addEventListener('touchend',e=>{if(sx==null||!S.active)return;const dx=e.cha
 let T={end:0,tot:0,iv:0},actx;
 function unlockAudio(){try{actx??=new (window.AudioContext||window.webkitAudioContext)();actx.resume()}catch(e){}}
 function beep(){try{[0,.25,.5].forEach(d=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(.4,actx.currentTime+d);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d+.2);o.start(actx.currentTime+d);o.stop(actx.currentTime+d+.22)})}catch(e){}}
-function startTimer(sec,lab){T.end=Date.now()+sec*1e3;T.tot=sec;$('#tlab').textContent=lab;$('#timer').hidden=false;$('#timer').classList.remove('ring');clearInterval(T.iv);T.iv=setInterval(tick,250);tick()}
-function stopTimer(){clearInterval(T.iv);$('#timer').hidden=true}
+function startTimer(sec,lab){T.end=Date.now()+sec*1e3;T.tot=sec;$('#tlab').textContent=lab;$('#timer').classList.add('on');$('#timer').classList.remove('ring');clearInterval(T.iv);T.iv=setInterval(tick,250);tick()}
+function stopTimer(){clearInterval(T.iv);$('#timer').classList.remove('on')}
 function tick(){
   const left=Math.max(0,Math.ceil((T.end-Date.now())/1e3));
   $('#tval').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');$('#tbar').style.width=(100*left/T.tot)+'%';
@@ -339,7 +340,7 @@ setInterval(tickClock,15e3);
 let lock=null;
 async function wake(){try{lock=await navigator.wakeLock?.request('screen')}catch(e){}}
 function releaseWake(){lock?.release();lock=null}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(S.active)wake();if(T.end&&!$('#timer').hidden)tick()}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(S.active)wake();if(T.end&&$('#timer').classList.contains('on'))tick()}});
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 S.active?workout():home();
