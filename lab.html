@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#222;display:flex;flex-wrap:wrap;gap:4px;font:10px monospace;color:#fff">
+<script src="picto.js"></script><script>
+const t={0:'#5c3d06',1:'#a8700c',2:'#f2b33d',3:'#f7cd73',4:'#fbe5b0',k:'#17130f',far:'#6e5426',hl:'#ff2e63'};
+for(const k in Picto.X)for(const ph of [0,.5]){const d=document.createElement('div');d.innerHTML=`<svg width="150" height="150" viewBox="0 0 200 200" style="background:${t[2]}"><circle cx="100" cy="105" r="78" fill="${t[3]}"/>${Picto.draw(k,t,ph)}</svg><br>${k.slice(0,24)} ${ph}`;document.body.append(d)}
+</script>
